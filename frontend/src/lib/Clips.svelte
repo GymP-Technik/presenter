@@ -1,16 +1,7 @@
 <script lang="ts">
-	let videos = [
-		{
-			id: "nasdad",
-			date: Date.now(),
-			current: true,
-		},
-		{
-			id: "nasdasdasdad",
-			date: Date.now(),
-			current: false,
-		},
-	];
+	import { onMount } from "svelte";
+
+	let videos = [];
 
 	async function deleteVideo(id: string) {
 		const res = await fetch(`${window.apiHost}/videos/${id}`, { method: "DELETE" });
@@ -21,7 +12,7 @@
 	}
 
 	async function selectVideo(id: string) {
-		const res = await fetch(`${window.apiHost}/videos/${id}`, { method: "DELETE" });
+		const res = await fetch(`${window.apiHost}/videos/${id}`, { method: "GET" });
 
 		const body = await res.json();
 
@@ -38,6 +29,14 @@
 	async function upload() {
 		fileForm.submit();
 	}
+
+	onMount(async () => {
+		const res = await fetch(`${window.apiHost}/videos`);
+
+		const body = await res.json();
+
+		videos = body;
+	});
 </script>
 
 <div class="container">
@@ -51,7 +50,7 @@
 				<p>{video.id}</p>
 				<span>{new Date(video.date)}</span>
 				<div class="actions">
-					<button>
+					<button on:click={() => selectVideo(video.id)}>
 						<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
 							><path
 								fill="currentColor"
@@ -59,7 +58,7 @@
 							/></svg
 						>
 					</button>
-					<button>
+					<button on:click={() => deleteVideo(video.id)}>
 						<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
 							><path
 								fill="currentColor"
@@ -75,6 +74,7 @@
 		<input
 			bind:this={fileInput}
 			type="file"
+			name="fileUpload"
 			id="fileUpload"
 			style="opacity:0; height:0px;width:0px;"
 			accept="video/mp4,video/x-m4v,video/*"

@@ -1,15 +1,25 @@
 <script lang="ts">
-	let status = { running: false, text: "Disabled", fetching: false };
+	import { onMount } from "svelte";
+
+	let status = { running: false, text: "Loading", fetching: true };
 
 	async function req(action: string) {
 		status.fetching = true;
 
-		const res = await fetch(`${window.apiHost}/vls/action`);
+		const res = await fetch(`${window.apiHost}/vlc/${action}`);
 
 		const body = await res.json();
 
 		statusbar = body;
 	}
+
+	onMount(async () => {
+		const res = await fetch(`${window.apiHost}/vlc`);
+
+		const body = await res.json();
+
+		status = body;
+	});
 </script>
 
 <div class="container">
