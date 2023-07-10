@@ -9,7 +9,7 @@ export const vlc: {
 
 		this.process = Deno.run({
 			cwd: Deno.cwd(),
-			cmd: ["vlc", "-L", "-f", clipPath],
+			cmd: ["vlc", "-L", "--no-video-title", "-f", clipPath],
 			stdout: "piped",
 			stderr: "piped",
 		});

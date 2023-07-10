@@ -38,7 +38,7 @@
 	</div>
 	<div class="controlls">
 		{#if $state.running}
-			<button disabled={$state.fetching || true} on:click={() => req("restart")}>Restart</button>
+			<button disabled={$state.fetching} on:click={() => req("restart")}>Restart</button>
 			<button disabled={$state.fetching} on:click={() => req("stop")}>Stop</button>
 		{:else}
 			<button disabled={$state.fetching} on:click={() => req("start")}>Start</button>
