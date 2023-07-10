@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { state } from "../stores/state";
+	import { state, selectedVideo } from "../stores/state";
 
 	async function req(action: string) {
 		state.update((state) => {
@@ -8,7 +8,16 @@
 			return state;
 		});
 
-		const res = await fetch(`${window.apiHost}/vlc/${action}`);
+		const res = await fetch(`${window.apiHost}/vlc/${action}`, {
+			method: "put",
+			headers: {
+				Accept: "application/json",
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				uuid: $selectedVideo,
+			}),
+		});
 
 		const body = await res.json();
 

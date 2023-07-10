@@ -1,12 +1,18 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { state } from "../stores/state";
+	import { state, selectedVideo } from "../stores/state";
 
 	let videos = [];
-	let selected = "";
 
 	async function deleteVideo(id: string) {
-		const res = await fetch(`${window.apiHost}/videos/${id}`, { method: "DELETE" });
+		const res = await fetch(`${window.apiHost}/videos/${id}`, {
+			method: "DELETE",
+			headers: {
+				Accept: "application/json",
+				"Content-Type": "application/json",
+			},
+			body: "{}",
+		});
 
 		const body = await res.json();
 
@@ -14,7 +20,7 @@
 	}
 
 	async function selectVideo(uuid: string) {
-		selected = uuid;
+		selectedVideo.set(uuid);
 	}
 
 	let fileInput;
@@ -45,12 +51,16 @@
 	</div>
 	<div class="list">
 		{#each videos as video (video.uuid)}
-			<div class="video" class:selected={video.uuid == selected} class:playing={$state.playing}>
+			<div
+				class="video"
+				class:selected={video.uuid == $selectedVideo}
+				class:playing={video.uuid == $state.playing}
+			>
 				<div class="thumbnail" />
 				<p>{video.filename}</p>
 				<span>{new Date(video.date)}</span>
 				<div class="actions">
-					<button on:click={() => selectVideo(video)}>
+					<button on:click={() => selectVideo(video.uuid)}>
 						<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
 							><path
 								fill="currentColor"
@@ -141,32 +151,17 @@
 		border: 1px solid #dfdfdf;
 	}
 
-	.status {
-		width: 100%;
-		height: 24px;
-
-		border-bottom: 1px solid #dfdfdf;
-
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-
-		padding: 8px;
-		padding-left: 16px;
-	}
-
-	.controlls {
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		padding: 16px;
-
-		gap: 24px;
-	}
-
 	p {
 		margin: 0;
 		font-size: 16px;
 		font-weight: 500;
+	}
+
+	.selected {
+		border-color: yellow;
+	}
+
+	.playing {
+		background-color: green;
 	}
 </style>

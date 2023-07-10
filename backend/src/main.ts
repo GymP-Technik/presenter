@@ -30,7 +30,7 @@ router
 	.get("/ping", (ctx) => {
 		ctx.response.body = "pong";
 	})
-	.get("/vlc/stop", async (ctx) => {
+	.put("/vlc/stop", async (ctx) => {
 		if (!state.running) {
 			throw new Error("Not running");
 		}
@@ -44,7 +44,7 @@ router
 		ctx.response.body = state;
 		ctx.response.status = 200;
 	})
-	.get("/vlc/start", async (ctx) => {
+	.put("/vlc/start", async (ctx) => {
 		if (state.running) {
 			throw new Error("Already running");
 		}
@@ -70,7 +70,7 @@ router
 		ctx.response.body = state;
 		ctx.response.status = 200;
 	})
-	.get("/vlc/restart", (ctx) => {
+	.put("/vlc/restart", (ctx) => {
 		throw new Error("TODO");
 	})
 	.get("/vlc", (ctx) => {
@@ -83,12 +83,9 @@ router
 		ctx.response.body = res;
 		ctx.response.status = 200;
 	})
-	.delete("/videos/:id", async (ctx) => {
-		// Get body
-		const body = await ctx.request.body().value;
-
+	.delete("/videos/:uuid", async (ctx) => {
 		// Check if video exists
-		const res = orm.findMany(Video, { where: { clause: "uuid = ?", values: [body.uuid] } });
+		const res = orm.findMany(Video, { where: { clause: "uuid = ?", values: [ctx.params.uuid] } });
 
 		if (res.length == 0) {
 			throw new Error("No video found");
@@ -96,9 +93,11 @@ router
 
 		orm.delete(res[0]);
 
-		await Deno.remove(`data/${res[0].filename}`);
+		const ending = res[0].filename?.split(".").slice(-1);
+		await Deno.remove(`data/${res[0].uuid}.${ending}`);
 
 		ctx.response.status = 200;
+		ctx.response.body = {};
 	})
 	.post("/upload", async (ctx) => {
 		const body = await ctx.request.body({
@@ -117,10 +116,17 @@ router
 		video.filename = form.files![0]!.originalName;
 		video.uuid = uuid;
 
+		orm.save(video);
+
 		// Copy video
-		await Deno.copyFile(`${form.files![0]!.filename}`, `data/${uuid}`);
+		const ending = form.files![0]!.filename?.split(".").slice(-1);
+		await Deno.copyFile(`${form.files![0]!.filename}`, `data/${uuid}.${ending}`);
 
 		ctx.response.redirect("/");
+	})
+	// Redirects
+	.get("/", (ctx) => {
+		ctx.response.redirect("/index.html");
 	});
 
 app.use(
