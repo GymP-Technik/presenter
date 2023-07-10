@@ -1,37 +1,38 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-
-	let status = { running: false, text: "Loading", fetching: true };
+	import { state } from "../stores/state";
 
 	async function req(action: string) {
-		status.fetching = true;
+		state.update((state) => {
+			state.fetching = true;
+			return state;
+		});
 
 		const res = await fetch(`${window.apiHost}/vlc/${action}`);
 
 		const body = await res.json();
 
-		statusbar = body;
+		state.set(body);
 	}
 
 	onMount(async () => {
 		const res = await fetch(`${window.apiHost}/vlc`);
 
 		const body = await res.json();
-
-		status = body;
+		state.set(body);
 	});
 </script>
 
 <div class="container">
 	<div class="status">
-		<p>{status.text}</p>
+		<p>{$state.text}</p>
 	</div>
 	<div class="controlls">
-		{#if status.running}
-			<button disabled={status.fetching} on:click={() => req("restart")}>Restart</button>
-			<button disabled={status.fetching} on:click={() => req("Stop")}>Stop</button>
+		{#if $state.running}
+			<button disabled={$state.fetching || true} on:click={() => req("restart")}>Restart</button>
+			<button disabled={$state.fetching} on:click={() => req("stop")}>Stop</button>
 		{:else}
-			<button disabled={status.fetching} on:click={() => req("start")}>Start</button>
+			<button disabled={$state.fetching} on:click={() => req("start")}>Start</button>
 		{/if}
 	</div>
 </div>

@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {},
+    "tasks": {
+        "dev": "deno run --watch --allow-read --allow-write --allow-net src/main.ts",
+        "run": "deno run --allow-read --allow-write --allow-net src/main.ts",
+        "lint": "deno lint",
+        "check": "deno check src/**/*.ts"
+    },
+    "lint": {
+        "rules": {
+            "exclude": [
+                "no-explicit-any",
+                "require-await",
+                "ban-types"
+            ]
+        }
+    }
+}

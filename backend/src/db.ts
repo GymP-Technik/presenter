@@ -1,8 +1,9 @@
 import { SSQL, SSQLTable } from "https://deno.land/x/smallorm_sqlite@0.2.1/mod.ts";
 
 export class Video extends SSQLTable {
-	name = "";
-	created = Date.now();
+	filename = "";
+	uuid = "";
+	date = Date.now();
 }
 
 try {

@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	import { state } from "../stores/state";
 
 	let videos = [];
+	let selected = "";
 
 	async function deleteVideo(id: string) {
 		const res = await fetch(`${window.apiHost}/videos/${id}`, { method: "DELETE" });
@@ -11,12 +13,8 @@
 		videos = body;
 	}
 
-	async function selectVideo(id: string) {
-		const res = await fetch(`${window.apiHost}/videos/${id}`, { method: "GET" });
-
-		const body = await res.json();
-
-		videos = body;
+	async function selectVideo(uuid: string) {
+		selected = uuid;
 	}
 
 	let fileInput;
@@ -40,17 +38,19 @@
 </script>
 
 <div class="container">
+	<!-- svelte-ignore a11y-click-events-have-key-events -->
+	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<div class="upload" on:click={openFileSelect}>
 		<p>Click to upload</p>
 	</div>
 	<div class="list">
-		{#each videos as video (video.id)}
-			<div class="video">
+		{#each videos as video (video.uuid)}
+			<div class="video" class:selected={video.uuid == selected} class:playing={$state.playing}>
 				<div class="thumbnail" />
-				<p>{video.id}</p>
+				<p>{video.filename}</p>
 				<span>{new Date(video.date)}</span>
 				<div class="actions">
-					<button on:click={() => selectVideo(video.id)}>
+					<button on:click={() => selectVideo(video)}>
 						<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
 							><path
 								fill="currentColor"
@@ -58,7 +58,7 @@
 							/></svg
 						>
 					</button>
-					<button on:click={() => deleteVideo(video.id)}>
+					<button on:click={() => deleteVideo(video.uuid)}>
 						<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
 							><path
 								fill="currentColor"
@@ -70,7 +70,12 @@
 			</div>
 		{/each}
 	</div>
-	<form bind:this={fileForm} method="POST" enctype="multipart/form-data" action="/upload">
+	<form
+		bind:this={fileForm}
+		method="POST"
+		enctype="multipart/form-data"
+		action={`${window.apiHost}/upload`}
+	>
 		<input
 			bind:this={fileInput}
 			type="file"
