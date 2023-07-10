@@ -145,7 +145,7 @@
 		font-size: 14px;
 		font-weight: 700;
 
-		color: black;
+		color: rgb(82, 82, 82);
 	}
 
 	.infos {
@@ -160,6 +160,8 @@
 	.list {
 		display: flex;
 		flex-direction: column;
+
+		gap: 16px;
 	}
 
 	.video {
