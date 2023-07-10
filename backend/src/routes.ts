@@ -20,6 +20,8 @@ async function vlcStop(ctx: ctx) {
 	state.fetching = false;
 	state.text = "Disabled";
 
+	state.save();
+
 	ctx.response.body = state;
 	ctx.response.status = 200;
 }
@@ -44,6 +46,8 @@ async function vlcStart(ctx: ctx) {
 	state.fetching = false;
 	state.playing = res[0].uuid;
 	state.text = "Running";
+
+	state.save();
 
 	ctx.response.body = state;
 	ctx.response.status = 200;

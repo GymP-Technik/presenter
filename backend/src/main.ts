@@ -2,8 +2,13 @@ import { Application, Status } from "https://deno.land/x/oak@v11.1.0/mod.ts";
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts";
 
 import router from "./routes.ts";
+import state from "./state.ts";
+import { vlc } from "./player.ts";
+import { Video, orm } from "./db.ts";
 
 const app = new Application();
+
+await state.load();
 
 // Error handling
 app.use(async (context, next) => {
@@ -49,8 +54,20 @@ app.use(async (context) => {
 
 const port = 3001;
 
-app.addEventListener("listen", () => {
+app.addEventListener("listen", async () => {
 	console.log(`Listening on http://localhost:${port}`);
+
+	if (state.running) {
+		const res = orm.findMany(Video, { where: { clause: "uuid=?", values: [state.playing] } });
+
+		if (res.length == 0) {
+			console.error("No video found");
+			return;
+		}
+
+		const ending = res[0].filename!.split(".").slice(-1);
+		await vlc.start(`data/${res[0].uuid}.${ending}`);
+	}
 });
 
 await app.listen({ port: port });
