@@ -29,15 +29,24 @@
 		gap: 64px;
 	}
 
+	@media only screen and (max-width: 600px) {
+		main {
+			width: calc(100% - 48px);
+			padding: 16px;
+		}
+	}
+
 	.clips {
-		min-width: 500px;
-		height: 100px;
+		min-width: 300px;
+		height: 100%;
 		flex: 1;
+		width: 100%;
 	}
 
 	.controls {
-		min-width: 500px;
-		height: 100px;
+		min-width: 300px;
+		height: 100%;
 		flex: 1;
+		width: 100%;
 	}
 </style>
