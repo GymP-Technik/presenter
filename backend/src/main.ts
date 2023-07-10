@@ -60,7 +60,8 @@ router
 		}
 
 		// Play video
-		await vlc.start(`data/${res[0].filename}`);
+		const ending = res[0].filename?.split(".").slice(-1);
+		await vlc.start(`data/${res[0].uuid}.${ending}`);
 
 		state.running = true;
 		state.fetching = false;

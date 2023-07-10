@@ -1,7 +1,7 @@
 import "./app.css";
 import App from "./App.svelte";
 
-window.apiHost = "http://localhost:3001";
+window.apiHost = "";
 
 const app = new App({
 	target: document.getElementById("app"),
