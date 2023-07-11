@@ -115,7 +115,9 @@ router.post("/upload", async (ctx) => {
 		type: "form-data",
 	});
 
-	const form = await body.value.read();
+	const form = await body.value.read({
+		maxFileSize: 262144000,
+	});
 
 	if (form.files?.length == 0) {
 		throw new Error("No files uploaded");
