@@ -14,9 +14,7 @@
 				Accept: "application/json",
 				"Content-Type": "application/json",
 			},
-			body: JSON.stringify({
-				uuid: $selectedVideo,
-			}),
+			body: JSON.stringify({}),
 		});
 
 		const body = await res.json();

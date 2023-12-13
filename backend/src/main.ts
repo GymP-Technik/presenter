@@ -58,15 +58,7 @@ app.addEventListener("listen", async () => {
 	console.log(`Listening on http://localhost:${port}`);
 
 	if (state.running) {
-		const res = orm.findMany(Video, { where: { clause: "uuid=?", values: [state.playing] } });
-
-		if (res.length == 0) {
-			console.error("No video found");
-			return;
-		}
-
-		const ending = res[0].filename!.split(".").slice(-1);
-		await vlc.start(`data/${res[0].uuid}.${ending}`);
+		await vlc.start(await state.getPlaylist());
 	}
 });
 

@@ -18,7 +18,7 @@
 				Accept: "application/json",
 				"Content-Type": "application/json",
 			},
-			body: "{}",
+			body: JSON.stringify({}),
 		});
 
 		const body = await res.json();
