@@ -31,6 +31,11 @@ let state: {
 			this.text = parsed.text;
 			this.fetching = parsed.fetching;
 			this.playlistBackup = parsed.playlistBackup;
+
+			if (this.playlistBackup === undefined) {
+				this.playlistBackup = [];
+				await this.save();
+			}
 		} catch (err) {
 			console.error(err);
 		}
@@ -44,6 +49,10 @@ let state: {
 		}
 	},
 	getPlaylist: async function () {
+		if (this.playlistBackup === undefined) {
+			return [];
+		}
+
 		return this.playlistBackup.map((entry) => {
 			// Check if video exists
 			const res = orm.findMany(Video, { where: { clause: "uuid=?", values: [entry] } });

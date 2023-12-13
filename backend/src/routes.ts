@@ -57,14 +57,16 @@ router.get("/", (ctx) => {
 });
 
 // Playlist // Array of uuids for videos
-router.put("/timeline", async (ctx) => {
+router.post("/timeline", async (ctx) => {
 	const body = await ctx.request.body().value;
 	state.playlistBackup = body.playlist;
 
 	await state.save();
 
-	await vlcStop(ctx);
-	await vlcStart(ctx);
+	if (state.running) {
+		await vlcStop(ctx);
+		await vlcStart(ctx);
+	}
 });
 
 router.get("/timeline", async (ctx) => {

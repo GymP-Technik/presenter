@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { state, selectedVideo } from "../stores/state";
+	import { state, playlist, unsavedChanges } from "../stores/state";
 
 	let videos = [
 		{
@@ -26,8 +26,14 @@
 		videos = body;
 	}
 
-	async function selectVideo(uuid: string) {
-		selectedVideo.set(uuid);
+	async function addVideo(uuid: string) {
+		$playlist[$playlist.length] = uuid;
+		$unsavedChanges = true;
+	}
+
+	async function removeVideo(uuid: string) {
+		$playlist = $playlist.filter((entry) => entry != uuid);
+		$unsavedChanges = true;
 	}
 
 	let fileInput;
@@ -42,11 +48,17 @@
 	}
 
 	onMount(async () => {
-		const res = await fetch(`${window.apiHost}/videos`);
+		// Video
+		const resVideo = await fetch(`${window.apiHost}/videos`);
+		const bodyVideo = await resVideo.json();
 
-		const body = await res.json();
+		videos = bodyVideo;
 
-		videos = body;
+		// Timeline
+		const resTimeline = await fetch(`${window.apiHost}/timeline`);
+		const bodyTimeline = await resTimeline.json();
+
+		$playlist = bodyTimeline;
 	});
 </script>
 
@@ -59,18 +71,16 @@
 	<div class="list">
 		{#each videos as video (video.uuid)}
 			<div class="video">
-				<div
-					class="status"
-					class:playing={video.uuid == $state.playing}
-					class:selected={video.uuid == $selectedVideo}
-				/>
+				<div class="status" class:selected={$playlist.includes(video.uuid)} />
 				<div class="infos">
 					<p>{video.filename}</p>
 					<span>{new Date(video.date)}</span>
 				</div>
 
+				<div class="position"></div>
+
 				<div class="actions">
-					<button on:click={() => selectVideo(video.uuid)} disabled={video.uuid == $selectedVideo}>
+					<button on:click={() => addVideo(video.uuid)} disabled={$playlist.includes(video.uuid)}>
 						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
 							><path
 								fill="currentColor"
@@ -78,7 +88,21 @@
 							/></svg
 						>
 					</button>
-					<button on:click={() => deleteVideo(video.uuid)}>
+					<button
+						on:click={() => removeVideo(video.uuid)}
+						disabled={!$playlist.includes(video.uuid)}
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+							><path
+								fill="currentColor"
+								d="M8 18q-.825 0-1.413-.588T6 16V8q0-.825.588-1.413T8 6h8q.825 0 1.413.588T18 8v8q0 .825-.588 1.413T16 18H8Z"
+							/></svg
+						>
+					</button>
+					<button
+						on:click={() => deleteVideo(video.uuid)}
+						disabled={$playlist.includes(video.uuid)}
+					>
 						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
 							><path
 								fill="currentColor"

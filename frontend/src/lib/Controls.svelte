@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { state, selectedVideo } from "../stores/state";
+	import { state, playlist, unsavedChanges } from "../stores/state";
 
 	async function req(action: string) {
 		state.update((state) => {
@@ -22,6 +22,21 @@
 		state.set(body);
 	}
 
+	async function postPlaylist() {
+		const res = await fetch(`${window.apiHost}/timeline`, {
+			method: "post",
+			headers: {
+				Accept: "application/json",
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ playlist: $playlist }),
+		});
+
+		if (res.ok) {
+			$unsavedChanges = false;
+		}
+	}
+
 	onMount(async () => {
 		const res = await fetch(`${window.apiHost}/vlc`);
 
@@ -41,6 +56,8 @@
 		{:else}
 			<button disabled={$state.fetching} on:click={() => req("start")}>Start</button>
 		{/if}
+
+		<button disabled={!$unsavedChanges} on:click={() => postPlaylist()}>Store playlist</button>
 	</div>
 </div>
 
