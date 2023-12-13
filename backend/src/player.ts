@@ -11,7 +11,7 @@ export const vlc: {
 
 		this.process = Deno.run({
 			cwd: Deno.cwd(),
-			cmd: ["vlc", "-L", "--no-video-title", "playlist.m3u"],
+			cmd: ["vlc", "-L", "--no-video-title", "-f", "playlist.m3u"],
 			stdout: "piped",
 			stderr: "piped",
 		});
