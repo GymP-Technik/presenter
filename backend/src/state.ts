@@ -1,18 +1,22 @@
 import * as toml from "https://deno.land/std@0.144.0/encoding/toml.ts";
 
+import { orm, Video } from "./db.ts";
+
 let state: {
 	running: boolean;
 	text: string;
 	fetching: boolean;
-	playing: string;
+	playlistBackup: string[];
 
 	load: () => Promise<void>;
 	save: () => Promise<void>;
+	getPlaylist: () => Promise<string[]>;
 } = {
 	running: false,
-	text: "First start",
 	fetching: false,
-	playing: "",
+	text: "First start",
+	playlistBackup: [],
+
 	load: async function () {
 		try {
 			const configFile = await Deno.readTextFile("data/state.toml");
@@ -20,13 +24,18 @@ let state: {
 				running: boolean;
 				text: string;
 				fetching: boolean;
-				playing: string;
+				playlistBackup: string[];
 			};
 
 			this.running = parsed.running;
 			this.text = parsed.text;
 			this.fetching = parsed.fetching;
-			this.playing = parsed.playing;
+			this.playlistBackup = parsed.playlistBackup;
+
+			if (this.playlistBackup === undefined) {
+				this.playlistBackup = [];
+				await this.save();
+			}
 		} catch (err) {
 			console.error(err);
 		}
@@ -38,6 +47,25 @@ let state: {
 		} catch (err) {
 			console.error(err);
 		}
+	},
+	getPlaylist: async function () {
+		if (this.playlistBackup === undefined) {
+			return [];
+		}
+
+		return this.playlistBackup.map((entry) => {
+			// Check if video exists
+			const res = orm.findMany(Video, { where: { clause: "uuid=?", values: [entry] } });
+
+			if (res.length == 0) {
+				throw new Error("No video found for " + entry);
+			}
+
+			// Play video
+			const ending = res[0].filename?.split(".").slice(-1);
+
+			return `data/${res[0].uuid}.${ending}`;
+		});
 	},
 };
 

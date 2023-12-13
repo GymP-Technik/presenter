@@ -7,7 +7,7 @@ declare global {
 	}
 }
 
-window.apiHost = "";
+window.apiHost = "http://localhost:3001";
 
 const app = new App({
 	target: document.getElementById("app"),

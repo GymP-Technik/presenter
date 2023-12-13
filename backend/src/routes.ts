@@ -31,20 +31,13 @@ async function vlcStart(ctx: ctx) {
 		throw new Error("Already running");
 	}
 
-	// Check if video exists
-	const res = orm.findMany(Video, { where: { clause: "uuid=?", values: [state.playing] } });
+	// Build playlist
+	const playlist = await state.getPlaylist();
 
-	if (res.length == 0) {
-		throw new Error("No video found");
-	}
-
-	// Play video
-	const ending = res[0].filename?.split(".").slice(-1);
-	await vlc.start(`data/${res[0].uuid}.${ending}`);
+	await vlc.start(playlist);
 
 	state.running = true;
 	state.fetching = false;
-	state.playing = res[0].uuid;
 	state.text = "Running";
 
 	state.save();
@@ -63,21 +56,33 @@ router.get("/", (ctx) => {
 	ctx.response.redirect("/index.html");
 });
 
+// Playlist // Array of uuids for videos
+router.post("/timeline", async (ctx) => {
+	const body = await ctx.request.body().value;
+	state.playlistBackup = body.playlist;
+
+	await state.save();
+
+	if (state.running) {
+		await vlcStop(ctx);
+		await vlcStart(ctx);
+	}
+});
+
+router.get("/timeline", async (ctx) => {
+	ctx.response.body = state.playlistBackup;
+	ctx.response.status = 200;
+});
+
 // VLC
 router.put("/vlc/stop", vlcStop);
 router.put("/vlc/start", async (ctx) => {
-	const body = await ctx.request.body().value;
-	state.playing = body.uuid;
-
 	await vlcStart(ctx);
 });
 router.put("/vlc/restart", async (ctx) => {
 	if (!state.running) {
 		throw new Error("Not running");
 	}
-
-	const body = await ctx.request.body().value;
-	state.playing = body.uuid;
 
 	await vlcStop(ctx);
 	await vlcStart(ctx);
