@@ -9,8 +9,5 @@
 		{
 			"path": "frontend"
 		}
-	],
-	"settings": {
-		"deno.enable": true
-	}
+	]
 }

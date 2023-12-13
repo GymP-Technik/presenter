@@ -1,12 +1,10 @@
 import { Application, Status } from "https://deno.land/x/oak@v11.1.0/mod.ts";
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts";
 
-import obs from "./obs.ts";
-
-await obs.connect();
-
-//import router from "./routes.ts";
-//import state from "./state.ts";
+import router from "./routes.ts";
+import state from "./state.ts";
+import { vlc } from "./player.ts";
+import { Spot, orm } from "../db.ts";
 
 const app = new Application();
 
@@ -41,7 +39,6 @@ app.use(router.allowedMethods());
 // Static hosting
 app.use(async (context, next) => {
 	const root = `${Deno.cwd()}/static`;
-
 	try {
 		await context.send({ root });
 	} catch {
@@ -61,7 +58,15 @@ app.addEventListener("listen", async () => {
 	console.log(`Listening on http://localhost:${port}`);
 
 	if (state.running) {
-		await obs.restore();
+		const res = orm.findMany(Spot, { where: { clause: "uuid=?", values: [state.playing] } });
+
+		if (res.length == 0) {
+			console.error("No video found");
+			return;
+		}
+
+		const ending = res[0].filename!.split(".").slice(-1);
+		await vlc.start(`data/${res[0].uuid}.${ending}`);
 	}
 });
 
