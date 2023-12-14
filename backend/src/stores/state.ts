@@ -1,8 +1,9 @@
+// LEgacy State management
+// TODO: Modernize
 import * as toml from "https://deno.land/std@0.144.0/encoding/toml.ts";
+import { Videos } from "local/src/db/models.ts";
 
-import { orm, Video } from "./db.ts";
-
-let state: {
+const state: {
 	running: boolean;
 	text: string;
 	fetching: boolean;
@@ -39,6 +40,10 @@ let state: {
 		} catch (err) {
 			console.error(err);
 		}
+
+		try {
+			await Deno.mkdir("data/videos");
+		} catch (_err) {}
 	},
 	save: async function () {
 		try {
@@ -53,20 +58,26 @@ let state: {
 			return [];
 		}
 
-		return this.playlistBackup.map((entry) => {
-			// Check if video exists
-			const res = orm.findMany(Video, { where: { clause: "uuid=?", values: [entry] } });
+		return await Promise.all(
+			this.playlistBackup.map(async (entry) => {
+				// Check if video exists
+				const res = await Videos().findOne({
+					uuid: entry,
+				});
 
-			if (res.length == 0) {
-				throw new Error("No video found for " + entry);
-			}
+				if (res == undefined) {
+					throw new Error("No video found for " + entry);
+				}
 
-			// Play video
-			const ending = res[0].filename?.split(".").slice(-1);
+				// Play video
+				const ending = res.filename?.split(".").slice(-1);
 
-			return `data/${res[0].uuid}.${ending}`;
-		});
+				return `data/videos/${res.uuid}.${ending}`;
+			})
+		);
 	},
 };
+
+await state.load();
 
 export default state;

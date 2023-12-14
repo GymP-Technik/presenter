@@ -1,8 +1,8 @@
 {
     "compilerOptions": {},
     "tasks": {
-        "dev": "deno run --watch --allow-run --allow-read --allow-write --allow-net src/main.ts",
-        "run": "deno run --allow-read --allow-run --allow-write --allow-net src/main.ts",
+        "dev": "deno run --unstable --watch --allow-run --allow-read --allow-write --allow-net src/main.ts",
+        "run": "deno run --unstable --allow-read --allow-run --allow-write --allow-net src/main.ts",
         "lint": "deno lint",
         "check": "deno check src/**/*.ts"
     },
@@ -13,6 +13,13 @@
                 "require-await",
                 "ban-types"
             ]
+        },
+        "files": {
+            "exclude": [
+                "data/",
+                "static/"
+            ]
         }
-    }
+    },
+    "importMap": "import_map.json"
 }

@@ -1,8 +1,9 @@
 import { Router, RouterContext } from "https://deno.land/x/oak@v11.1.0/mod.ts";
 
-import state from "./state.ts";
+import state from "./stores/state.ts";
 
-import { orm, Video } from "./db.ts";
+import { Videos } from "./db/models.ts";
+
 import { vlc } from "./player.ts";
 
 type ctx = RouterContext<any, any, any>;
@@ -67,6 +68,9 @@ router.post("/timeline", async (ctx) => {
 		await vlcStop(ctx);
 		await vlcStart(ctx);
 	}
+
+	ctx.response.status = 200;
+	ctx.response.body = {};
 });
 
 router.get("/timeline", async (ctx) => {
@@ -93,27 +97,27 @@ router.get("/vlc", (ctx) => {
 });
 
 // Videos
-router.get("/videos", (ctx) => {
-	const res = orm.findMany(Video, {});
+router.get("/videos", async (ctx) => {
+	const res = await Videos().find({}).toArray();
 
 	ctx.response.body = res;
 	ctx.response.status = 200;
 });
 router.delete("/videos/:uuid", async (ctx) => {
 	// Check if video exists
-	const res = orm.findMany(Video, { where: { clause: "uuid = ?", values: [ctx.params.uuid] } });
+	const res = await Videos().findOne({ uuid: ctx.params.uuid });
 
-	if (res.length == 0) {
+	if (res == undefined) {
 		throw new Error("No video found");
 	}
 
-	orm.delete(res[0]);
+	await Videos().deleteOne({ uuid: ctx.params.uuid });
 
-	const ending = res[0].filename?.split(".").slice(-1);
-	await Deno.remove(`data/${res[0].uuid}.${ending}`);
+	const ending = res.filename?.split(".").slice(-1);
+	await Deno.remove(`data/videos/${res.uuid}.${ending}`);
 
 	ctx.response.status = 200;
-	ctx.response.body = orm.findMany(Video, {});
+	ctx.response.body = await Videos().find({}).toArray();
 });
 router.post("/upload", async (ctx) => {
 	const body = await ctx.request.body({
@@ -129,16 +133,17 @@ router.post("/upload", async (ctx) => {
 	}
 
 	// Create video
-	const video = new Video();
 	const uuid = crypto.randomUUID();
-	video.filename = form.files![0]!.originalName;
-	video.uuid = uuid;
 
-	orm.save(video);
+	await Videos().insertOne({
+		uuid: uuid,
+		filename: form.files![0]!.originalName,
+		date: new Date(),
+	});
 
 	// Copy video
 	const ending = form.files![0]!.filename?.split(".").slice(-1);
-	await Deno.copyFile(`${form.files![0]!.filename}`, `data/${uuid}.${ending}`);
+	await Deno.copyFile(`${form.files![0]!.filename}`, `data/videos/${uuid}.${ending}`);
 
 	ctx.response.redirect("/");
 });
