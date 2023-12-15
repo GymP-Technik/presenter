@@ -2,9 +2,16 @@ import { Router, RouterContext } from "https://deno.land/x/oak@v11.1.0/mod.ts";
 
 import state from "./stores/state.ts";
 
-import { Videos } from "./db/models.ts";
+import { Videos, Users } from "./db/models.ts";
 
 import { vlc } from "./player.ts";
+
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import secrets from "local/src/stores/secrets.ts";
+import { Status } from "https://deno.land/std@0.152.0/http/http_status.ts";
+
+import { create } from "https://deno.land/x/djwt@v3.0.1/mod.ts";
+import log from "local/src/utils/log.ts";
 
 type ctx = RouterContext<any, any, any>;
 
@@ -50,6 +57,45 @@ async function vlcStart(ctx: ctx) {
 // General
 router.get("/ping", (ctx) => {
 	ctx.response.body = "pong";
+});
+
+router.post("/login", async (ctx) => {
+	const body = await ctx.request.body().value;
+
+	if (typeof body.username !== "string") {
+		ctx.response.status = Status.Forbidden;
+		ctx.response.body = {};
+		return;
+	}
+
+	// Hash password
+	const hash = await bcrypt.hash(body.password, await secrets.get("auth.salt", await bcrypt.genSalt()));
+
+	const user = await Users().findOne({ username: body.username });
+
+	if (user === undefined || user.password !== hash) {
+		ctx.response.status = Status.Forbidden;
+		ctx.response.body = {};
+		return;
+	}
+
+	// Create new jwt
+	const jwt = await create(
+		{ alg: "HS512", typ: "JWT" },
+		{
+			validUntil: Date.now() + 1000 * 60 * 60, // 1h valid tokens
+			roles: user.roles,
+		},
+		await secrets.get(
+			"auth.key",
+			await crypto.subtle.generateKey({ name: "HMAC", hash: "SHA-512" }, true, ["sign", "verify"])
+		)
+	);
+
+	log.info(`[auth] Created JWT for '${body.username}'`);
+
+	ctx.response.status = 200;
+	ctx.response.body = { jwt: jwt };
 });
 
 // Redirects

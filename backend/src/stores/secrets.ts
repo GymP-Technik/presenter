@@ -70,7 +70,9 @@ const secrets: {
 		}
 
 		obj = value;
-
+		try {
+			await Deno.mkdir("data/");
+		} catch (_err) {}
 		await Deno.writeTextFile(this.file, toml.stringify(this.secrets));
 	},
 };

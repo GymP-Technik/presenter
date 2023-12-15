@@ -13,3 +13,14 @@ export interface VideoSchema {
 }
 
 export const Videos = () => db!.collection<VideoSchema>("videos");
+
+export interface UserSchema {
+	_id: Bson.ObjectId;
+
+	username: string;
+	password: string;
+
+	roles: string[];
+}
+
+export const Users = () => db!.collection<UserSchema>("users");

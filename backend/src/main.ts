@@ -15,5 +15,8 @@ await connect();
 // Cleanup local data
 await manager.clean();
 
+// Create root user on first start
+await manager.root();
+
 // Start api
 await app.listen({ port: 3001 });
