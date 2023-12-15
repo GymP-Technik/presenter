@@ -1,9 +1,17 @@
 import { Router, RouterContext } from "https://deno.land/x/oak@v11.1.0/mod.ts";
 
-import state from "./state.ts";
+import state from "./stores/state.ts";
 
-import { orm, Video } from "./db.ts";
+import { Videos, Users } from "./db/models.ts";
+
 import { vlc } from "./player.ts";
+
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import secrets from "local/src/stores/secrets.ts";
+import { Status } from "https://deno.land/std@0.152.0/http/http_status.ts";
+
+import { create } from "https://deno.land/x/djwt@v3.0.1/mod.ts";
+import log from "local/src/utils/log.ts";
 
 type ctx = RouterContext<any, any, any>;
 
@@ -51,6 +59,45 @@ router.get("/ping", (ctx) => {
 	ctx.response.body = "pong";
 });
 
+router.post("/login", async (ctx) => {
+	const body = await ctx.request.body().value;
+
+	if (typeof body.username !== "string") {
+		ctx.response.status = Status.Forbidden;
+		ctx.response.body = {};
+		return;
+	}
+
+	// Hash password
+	const hash = await bcrypt.hash(body.password, await secrets.get("auth.salt", await bcrypt.genSalt()));
+
+	const user = await Users().findOne({ username: body.username });
+
+	if (user === undefined || user.password !== hash) {
+		ctx.response.status = Status.Forbidden;
+		ctx.response.body = {};
+		return;
+	}
+
+	// Create new jwt
+	const jwt = await create(
+		{ alg: "HS512", typ: "JWT" },
+		{
+			validUntil: Date.now() + 1000 * 60 * 60, // 1h valid tokens
+			roles: user.roles,
+		},
+		await secrets.get(
+			"auth.key",
+			await crypto.subtle.generateKey({ name: "HMAC", hash: "SHA-512" }, true, ["sign", "verify"])
+		)
+	);
+
+	log.info(`[auth] Created JWT for '${body.username}'`);
+
+	ctx.response.status = 200;
+	ctx.response.body = { jwt: jwt };
+});
+
 // Redirects
 router.get("/", (ctx) => {
 	ctx.response.redirect("/index.html");
@@ -67,6 +114,9 @@ router.post("/timeline", async (ctx) => {
 		await vlcStop(ctx);
 		await vlcStart(ctx);
 	}
+
+	ctx.response.status = 200;
+	ctx.response.body = {};
 });
 
 router.get("/timeline", async (ctx) => {
@@ -93,27 +143,27 @@ router.get("/vlc", (ctx) => {
 });
 
 // Videos
-router.get("/videos", (ctx) => {
-	const res = orm.findMany(Video, {});
+router.get("/videos", async (ctx) => {
+	const res = await Videos().find({}).toArray();
 
 	ctx.response.body = res;
 	ctx.response.status = 200;
 });
 router.delete("/videos/:uuid", async (ctx) => {
 	// Check if video exists
-	const res = orm.findMany(Video, { where: { clause: "uuid = ?", values: [ctx.params.uuid] } });
+	const res = await Videos().findOne({ uuid: ctx.params.uuid });
 
-	if (res.length == 0) {
+	if (res == undefined) {
 		throw new Error("No video found");
 	}
 
-	orm.delete(res[0]);
+	await Videos().deleteOne({ uuid: ctx.params.uuid });
 
-	const ending = res[0].filename?.split(".").slice(-1);
-	await Deno.remove(`data/${res[0].uuid}.${ending}`);
+	const ending = res.filename?.split(".").slice(-1);
+	await Deno.remove(`data/videos/${res.uuid}.${ending}`);
 
 	ctx.response.status = 200;
-	ctx.response.body = orm.findMany(Video, {});
+	ctx.response.body = await Videos().find({}).toArray();
 });
 router.post("/upload", async (ctx) => {
 	const body = await ctx.request.body({
@@ -129,16 +179,17 @@ router.post("/upload", async (ctx) => {
 	}
 
 	// Create video
-	const video = new Video();
 	const uuid = crypto.randomUUID();
-	video.filename = form.files![0]!.originalName;
-	video.uuid = uuid;
 
-	orm.save(video);
+	await Videos().insertOne({
+		uuid: uuid,
+		filename: form.files![0]!.originalName,
+		date: new Date(),
+	});
 
 	// Copy video
 	const ending = form.files![0]!.filename?.split(".").slice(-1);
-	await Deno.copyFile(`${form.files![0]!.filename}`, `data/${uuid}.${ending}`);
+	await Deno.copyFile(`${form.files![0]!.filename}`, `data/videos/${uuid}.${ending}`);
 
 	ctx.response.redirect("/");
 });

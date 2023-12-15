@@ -16,12 +16,22 @@
 
 		connectionState = "Reachable";
 	});
+
+	let dev = import.meta.env.DEV;
+	let git = import.meta.env.GIT.a.slice(0, 12);
 </script>
 
 <footer>
 	<div class="left">
 		<div class="status" style={`background-color: var(--color-${connectionState})`} />
 		<p>{connectionState}</p>
+	</div>
+	<div class="right">
+		<p>
+			{#if dev}
+				dev{:else}prod
+			{/if}-{git}
+		</p>
 	</div>
 </footer>
 
@@ -53,6 +63,12 @@
 
 		padding-left: 16px;
 		padding-right: 32px;
+
+		margin-right: auto;
+	}
+
+	.right {
+		padding-right: 16px;
 	}
 
 	.status {

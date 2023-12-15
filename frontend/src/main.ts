@@ -7,7 +7,11 @@ declare global {
 	}
 }
 
-window.apiHost = "";
+if (import.meta.env.DEV) {
+	window.apiHost = "http://localhost:3001";
+} else {
+	window.apiHost = "";
+}
 
 const app = new App({
 	target: document.getElementById("app"),
