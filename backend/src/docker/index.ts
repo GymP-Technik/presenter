@@ -211,9 +211,9 @@ const docker = {
 
 			if (changed) {
 				// Wait for service to startup
-				log.info(`[docker] Waiting 10s for services to get ready`);
+				log.info(`[docker] Waiting 2min for services to get ready`);
 
-				await sleep(10 * 1000);
+				await sleep(60 * 1000 * 2);
 			}
 		},
 
