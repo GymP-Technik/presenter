@@ -11,3 +11,8 @@ JWT Payload:
 ```
 
 Default user: 'root' 'password'
+
+## Docker
+
+Install: [Convenience Script](https://docs.docker.com/engine/install/ubuntu/#install-using-the-convenience-script)
+Non-root: [Guide](https://docs.docker.com/engine/install/linux-postinstall/)

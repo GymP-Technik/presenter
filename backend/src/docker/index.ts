@@ -238,8 +238,8 @@ const docker = {
 
 				try {
 					const body = await docker.utils.post(`/swarm/init`, {
-						ListenAddr: "0.0.0.0",
-						AdvertiseAddr: "0.0.0.0",
+						ListenAddr: "127.0.0.1",
+						AdvertiseAddr: "127.0.0.1",
 						Spec: {
 							Labels: {
 								created: Date.toString(),
