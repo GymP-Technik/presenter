@@ -42,8 +42,7 @@
 	}
 
 	.clips {
-		min-width: 300px;
-		height: 100%;
+		min-width: 440px;
 		flex: 1;
 		width: 100%;
 	}

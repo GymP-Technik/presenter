@@ -2,14 +2,7 @@
 	import { onMount } from "svelte";
 	import { state, playlist, unsavedChanges } from "../stores/state";
 
-	let videos = [
-		{
-			id: 4,
-			filename: "Kopie von Compliment Day  Welttag.mp4",
-			uuid: "2095d76b-d1a8-4f6b-81e9-e455e278d923",
-			date: 1688975266079,
-		},
-	];
+	let videos = [];
 
 	async function deleteVideo(id: string) {
 		const res = await fetch(`${window.apiHost}/videos/${id}`, {
@@ -135,8 +128,6 @@
 
 <style>
 	.container {
-		width: 100%;
-
 		background-color: #f7f7f9;
 
 		border: 1px solid #dfdfdf;

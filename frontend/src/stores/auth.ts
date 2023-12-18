@@ -1,4 +1,5 @@
 import { writable } from "svelte/store";
+import { push } from "svelte-spa-router";
 
 function parseJwt(token: string) {
 	var base64Url = token.split(".")[1];
@@ -27,7 +28,7 @@ function useAuth() {
 		authenticated: boolean;
 		roles: string[];
 		validUntil: number;
-		error: undefined | typeof AuthError;
+		error: undefined | string;
 	} = {
 		authenticated: false,
 		roles: [],
@@ -39,6 +40,9 @@ function useAuth() {
 
 	function logout() {
 		localStorage.removeItem("auth");
+		set(defaultState);
+
+		push("/");
 	}
 
 	async function login(username: string, password: string) {
@@ -70,6 +74,7 @@ function useAuth() {
 			};
 		} else {
 			set({
+				...defaultState,
 				error: AuthError.Invalid,
 			});
 
@@ -91,7 +96,7 @@ function useAuth() {
 					if (content.expire < Date.now()) {
 						// Expired JWT
 						set({
-							...{ defaultState },
+							...defaultState,
 							error: AuthError.Expired,
 						});
 					}

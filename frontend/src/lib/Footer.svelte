@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 
+	export let ping = false;
+	export let build = false;
+
 	let connectionState = "Pending";
 
 	// Try to ping host
@@ -23,16 +26,20 @@
 
 <footer>
 	<div class="left">
-		<div class="status" style={`background-color: var(--color-${connectionState})`} />
-		<p>{connectionState}</p>
+		{#if ping}
+			<div class="status" style={`background-color: var(--color-${connectionState})`} />
+			<p>{connectionState}</p>
+		{/if}
 	</div>
-	<div class="right">
-		<p>
-			{#if dev}
-				dev{:else}prod
-			{/if}-{git}
-		</p>
-	</div>
+	{#if build}
+		<div class="right">
+			<p>
+				{#if dev}
+					dev{:else}prod
+				{/if}-{git}
+			</p>
+		</div>
+	{/if}
 </footer>
 
 <style>
